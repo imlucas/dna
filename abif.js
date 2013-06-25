@@ -24,6 +24,82 @@ var ABIF_TYPES = {
     19: 'cString'
 };
 
+var entries = {
+  c: {
+    size: 1,
+    string: true,
+  },
+  b: {
+    size: 1,
+    native: 'Int8',
+    endian: false,
+  },
+  B: {
+    size: 1,
+    native: 'UInt8',
+    endian: false,
+  },
+  '?': {
+    size: 1,
+    native: 'UInt8',
+    endian: false,
+  },
+  h: {
+    size: 2,
+    native: 'Int16',
+  },
+  H: {
+    size: 2,
+    native: 'UInt16',
+  },
+  i: {
+    size: 4,
+    native: 'Int32',
+  },
+  I: {
+    size: 4,
+    native: 'UInt32',
+  },
+  l: {
+    size: 4,
+    native: 'Int32',
+  },
+  L: {
+    size: 4,
+    native: 'UInt32',
+  },
+  f: {
+    size: 4,
+    native: 'Float',
+  },
+  d: {
+    size: 8,
+    native: 'Double',
+  },
+  s: {
+    size: 1,
+    string: true,
+  }
+};
+
+var ENDIAN = {
+  '@': false,
+  '=': false,
+  '<': 'LE',
+  '>': 'BE',
+  '!': 'BE',
+};
+
+var struct = {
+    sizeOf: function(huh){
+
+    },
+    unpack: function(format, buf, offset){
+
+    }
+};
+
+
 function ABIFBuffer(buf){
     this.buf = buf;
     this.pos = 0;
