@@ -134,6 +134,7 @@ Reader.prototype.getData = function(name, num){
     return data.length === 1 ? data[0] : data;
 };
 
+
 Reader.prototype.getEntry = function(name, num){
     var entry;
 
@@ -184,6 +185,20 @@ Reader.prototype.readNextChar = function(){
     this.pos += 1;
     return v;
 };
+
+Reader.prototype.readNextByte = function(size){
+    if(size === undefined || size === 1){
+        var v = this.buf.UInt8(this.pos);
+        this.pos += 1;
+        return v;
+    }
+    var out = [];
+    for(var i=0; i<=size; i++){
+        out.push(this.readNextByte());
+    }
+    return out;
+};
+
 
 Reader.prototype.tell = function(){
     return this.pos;
