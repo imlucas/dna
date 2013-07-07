@@ -2,7 +2,7 @@
 var fs = require('fs');
 
 fs.readFile('./mitochondrion/chromatogram/JuneBBC-10-LCMtF.ab1', function(err, data){
-    var abif = new ABIFBuffer(data);
+    var abif = new Reader(data);
     console.log(abif.getData('DATA', 4));
     abif.showEntries();
 });
@@ -100,7 +100,7 @@ var struct = {
 };
 
 
-function ABIFBuffer(buf){
+function Reader(buf){
     this.buf = buf;
     this.pos = 0;
     this.type = this.readNextString(4);
@@ -115,13 +115,13 @@ function ABIFBuffer(buf){
         this.entries.push(e);
     }
 }
-ABIFBuffer.prototype.showEntries = function(){
+Reader.prototype.showEntries = function(){
     this.entries.map(function(entry){
         console.log(entry);
     });
 };
 
-ABIFBuffer.prototype.getData = function(name, num){
+Reader.prototype.getData = function(name, num){
     if(num === undefined){
         num = 1;
     }
@@ -134,7 +134,7 @@ ABIFBuffer.prototype.getData = function(name, num){
     return data.length === 1 ? data[0] : data;
 };
 
-ABIFBuffer.prototype.getEntry = function(name, num){
+Reader.prototype.getEntry = function(name, num){
     var entry;
 
     this.entries.some(function(e){
@@ -146,11 +146,11 @@ ABIFBuffer.prototype.getEntry = function(name, num){
     return entry;
 };
 
-ABIFBuffer.prototype.readData = function(type, num){
+Reader.prototype.readData = function(type, num){
     var m = {
         1: 'readNextByte',
         2: 'readNextString',
-        3: 'readNextUnsignedIns',
+        3: 'readNextUnsignedInt',
         4: 'readNextShort',
         5: 'readNextLong',
         7: 'readNextFloat',
@@ -160,7 +160,7 @@ ABIFBuffer.prototype.readData = function(type, num){
     return this[m[type]](num);
 };
 
-ABIFBuffer.prototype.readNextString = function(size){
+Reader.prototype.readNextString = function(size){
     var chars = [];
     for(var i = 0; i <= size -1; i++){
         chars.push(this.readNextChar());
@@ -168,28 +168,28 @@ ABIFBuffer.prototype.readNextString = function(size){
     return chars.join('');
 };
 
-ABIFBuffer.prototype.readNextShort = function(){
+Reader.prototype.readNextShort = function(){
     var v = this.buf.readInt16BE(this.pos);
     this.pos += 2;
     return v;
 };
-ABIFBuffer.prototype.readNextInt = function(){
+Reader.prototype.readNextInt = function(){
     var v = this.buf.readInt32BE(this.pos);
     this.pos += 4;
     return v;
 };
 
-ABIFBuffer.prototype.readNextChar = function(){
+Reader.prototype.readNextChar = function(){
     var v = this.buf.toString('ascii', this.pos, this.pos+1);
     this.pos += 1;
     return v;
 };
 
-ABIFBuffer.prototype.tell = function(){
+Reader.prototype.tell = function(){
     return this.pos;
 };
 
-ABIFBuffer.prototype.seek = function(pos){
+Reader.prototype.seek = function(pos){
     this.pos = pos;
 };
 
@@ -204,12 +204,7 @@ function DirEntry(buf){
     this.dataoffsetpos = buf.tell();
     this.dataoffset = buf.readNextInt();
     this.datahandle = buf.readNextInt();
+
+    this.mydataoffset = (this.datasize <= 4) ? this.dataoffsetpos : this.dataoffset;
+    this.mytype = (this.elementtype < 1024) ? ABIF_TYPES[this.elementtype] || 'unknown' : 'user';
 }
-Object.defineProperty(DirEntry.prototype, 'mydataoffset', {'get': function(){
-    return (this.datasize <= 4) ? this.dataoffsetpos : this.dataoffset;
-}});
-
-
-Object.defineProperty(DirEntry.prototype, 'mytype', {'get': function(){
-    return (this.elementtype < 1024) ? ABIF_TYPES[this.elementtype] || 'unknown' : 'user';
-}});
