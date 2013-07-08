@@ -3,7 +3,7 @@ var fs = require('fs');
 
 fs.readFile('./mitochondrion/chromatogram/JuneBBC-10-LCMtF.ab1', function(err, data){
     var abif = new Reader(data);
-    console.log(abif.getData('DATA', 4));
+    console.log(abif.getData('S/N%', 1));
     abif.showEntries();
 });
 
@@ -47,7 +47,7 @@ function Reader(buf){
 }
 Reader.prototype.showEntries = function(){
     this.entries.map(function(entry){
-        console.log(entry);
+        console.log(entry.name);
     });
 };
 
@@ -57,7 +57,8 @@ Reader.prototype.getData = function(name, num){
     }
     var entry = this.getEntry(name, num);
     if(!entry){
-        throw new Error('Entry ' + name + ' (' +num + ')  not found.');
+        // throw new Error('Entry ' + name + ' (' +num + ')  not found.');
+        return undefined;
     }
     this.seek(entry.mydataoffset);
     data = this.readData(entry.elementtype, entry.numelements);
@@ -110,8 +111,8 @@ Reader.prototype._loop = function(type, num){
     var buf = [],
         method = 'readNext' + type;
 
-    for(var i=0; i <= num; i++){
-        buf.push(this[type]);
+    for(var i=0; i < num; i++){
+        buf.push(this[method]());
     }
     return buf;
 };
@@ -134,7 +135,7 @@ Reader.prototype.readNextChar = function(){
 };
 
 Reader.prototype.readNextByte = function(){
-    var v = this.buf.readUInt8BE(this.pos);
+    var v = this.buf.readUInt8(this.pos);
     this.pos += 1;
     return v;
 };
@@ -170,16 +171,21 @@ Reader.prototype.readNextBool = function(){
 
 Reader.prototype.readNextDate = function(){
     var d = new Date();
-    d.setYear(this.readNextShort());
-    d.setMonth(this.readNextByte());
-    d.setDay(this.readNextByte());
+    var y = this.readNextShort();
+    var m = this.readNextByte();
+    var day = this.readNextByte();
+
+    console.log(y. m, day);
+    d.setYear(y);
+    d.setMonth(m);
+    d.setDate(day);
     return d;
 };
 
 
 Reader.prototype.readNextTime = function(){
     var d = new Date();
-    d.setHour(this.readNextByte());
+    d.setHours(this.readNextByte());
     d.setMinutes(this.readNextByte());
     d.setSeconds(this.readNextByte());
     d.setMilliseconds(this.readNextByte());
@@ -244,3 +250,187 @@ function DirEntry(buf){
     this.mydataoffset = (this.datasize <= 4) ? this.dataoffsetpos : this.dataoffset;
     this.mytype = (this.elementtype < 1024) ? ABIF_TYPES[this.elementtype] || 'unknown' : 'user';
 }
+
+// http://cpansearch.perl.org/src/VITA/Bio-Trace-ABIF-1.05/lib/Bio/Trace/ABIF.pm
+
+Read.prototype.getAnalyzedDataForChannel = function(channel){
+    if(channel === 5){
+        channel = 205;
+    }
+    else {
+        channel += 8;
+    }
+    if (channel < 9 || (channel > 12 && channel!= 205)) {
+        return null;
+    }
+    return this.getEntry('DATA', channel);
+};
+
+Read.protoype.getBaseOrder = function(){
+    return this.getData('FWO_').split('');
+};
+
+Read.prototype.getChannel = function(base){
+    base = base.toUpperCase();
+    var order = this.getBaseOrder();
+    for(var i = 0; i <= order.length; i++){
+        if(order[i] === base){
+            return i + 1;
+        }
+    }
+    return undefined;
+};
+
+// These are all just simple tag reads.
+// Keeping this as a simple map for anyone else's reference.
+// Don't worry.  They'll get all nice and camel cased below.
+var accessors = {
+    'analysis_protocol_settings_name': 'APrN',
+    'analysis_protocol_settings_version': 'APrV',
+    'analysis_protocol_xml': 'APrX',
+    'analysis_protocol_xml_schema_version': 'APXV',
+    'analysis_return_code': 'ARTN',
+    'average_peak_spacing': 'SPAC',
+    'basecaller_apsf': 'ASPF',
+    'basecaller_bcp_dll': ['SPAC', 2],
+    'basecaller_version': ['SVER', 2],
+    'basecalling_analysis_timestamp': 'BCTS',
+    'base_locations': ['PLOC', 2],
+    'base_locations_edited': 'PLOC',
+    'base_spacing': ['SPAC', 3],
+    'buffer_tray_temperature': 'BufT',
+    'capillary_number': 'LANE',
+    'chem': 'phCH',
+    'comment': '',
+    'comment_title': '',
+    'container_identifier': '',
+    'container_name': '',
+    'container_owner': '',
+    'current': '',
+    'data_collection_module_file': '',
+    'data_collection_software_version': '',
+    'data_collection_firmware_version': '',
+    'data_collection_start_date': '',
+    'data_collection_start_time': '',
+    'data_collection_stop_date': '',
+    'data_collection_stop_time': '',
+    'detector_heater_temperature': '',
+    'downsampling_factor': '',
+    'dye_name': '',
+    'dye_set_name': '',
+    'dye_significance': '',
+    'dye_type': '',
+    'dye_wavelength': '',
+    'edited_quality_values': '',
+    'edited_quality_values_ref': '',
+    'edited_sequence': '',
+    'edited_sequence_length': '',
+    'electrophoresis_voltage': '',
+    'gel_type': '',
+    'gene_mapper_analysis_method': '',
+    'gene_mapper_panel_name': '',
+    'gene_mapper_sample_type': '',
+    'gene_scan_sample_name': '',
+    'injection_time': '',
+    'injection_voltage': '',
+    'instrument_class': '',
+    'instrument_family': '',
+    'instrument_name_and_serial_number': '',
+    'instrument_param': '',
+    'is_capillary_machine': '',
+    'laser_power': '',
+    'length_to_detector': '',
+    'mobility_file': '',
+    'mobility_file_orig': '',
+    'model_number': '',
+    'noise': '',
+    'num_capillaries': '',
+    'num_dyes': '',
+    'num_scans': '',
+    'official_instrument_name': '',
+    'offscale_peaks': '',
+    'offscale_scans': '',
+    'order_base': '',
+    'peak1_location': '',
+    'peak1_location_orig': '',
+    'peak_area_ratio': '',
+    'peaks': '',
+    'pixel_bin_size': '',
+    'pixels_lane': '',
+    'plate_type': '',
+    'plate_size': '',
+    'polymer_expiration_date': '',
+    'polymer_lot_number': '',
+    'power': '',
+    'quality_levels': '',
+    'quality_values': '',
+    'quality_values_ref': '',
+    'raw_data_for_channel': '',
+    'raw_trace': '',
+    'rescaling': '',
+    'results_group': '',
+    'results_group_comment': '',
+    'results_group_owner': '',
+    'reverse_complement_flag': '',
+    'run_module_name': '',
+    'run_module_version': '',
+    'run_module_xml_schema_version': '',
+    'run_module_xml_string': '',
+    'run_name': '',
+    'run_protocol_name': '',
+    'run_protocol_version': '',
+    'run_start_date': '',
+    'run_start_time': '',
+    'run_stop_date': '',
+    'run_stop_time': '',
+    'run_temperature': '',
+    'sample_file_format_version': '',
+    'sample_name': '',
+    'sample_tracking_id': '',
+    'scanning_rate': '',
+    'scan_color_data_values': '',
+    'scan_numbers': '',
+    'scan_number_indices': '',
+    'seqscape_project_name': '',
+    'seqscape_project_template': '',
+    'seqscape_specimen_name': '',
+    'sequence': '',
+    'sequence_length': '',
+    'sequencing_analysis_param_filename': '',
+    'signal_level': '',
+    'size_standard_filename': '',
+    'snp_set_name': '',
+    'start_collection_event': '',
+    'start_point': '',
+    'start_point_orig': '',
+    'start_run_event': '',
+    'stop_collection_event': '',
+    'stop_point': '',
+    'stop_point_orig': '',
+    'stop_run_event': '',
+    'temperature': '',
+    'trace': '',
+    'trim_probability_threshold': '',
+    'trim_region': '',
+    'voltage': '',
+    'user': '',
+    'well_id': ''
+};
+
+Object.keys(accessors).map(function(accessor){
+    var r = /[-_]([a-z])/g;
+    var name = accessor.replace(regexp, function(match, c){
+        return c.toUpperCase();
+    });
+    name = method.charAt(0).toUpperCase() + method.substring(1);
+
+    var args = accessors[accessor];
+    if(!Array.isArray(args)){
+        args = [args];
+    }
+
+    Reader.prototype['get' + name] = function(){
+        return this.getData.apply(this, args);
+    };
+
+});
