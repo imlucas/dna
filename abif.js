@@ -24,81 +24,11 @@ var ABIF_TYPES = {
     19: 'cString'
 };
 
-var entries = {
-  c: {
-    size: 1,
-    string: true,
-  },
-  b: {
-    size: 1,
-    native: 'Int8',
-    endian: false,
-  },
-  B: {
-    size: 1,
-    native: 'UInt8',
-    endian: false,
-  },
-  '?': {
-    size: 1,
-    native: 'UInt8',
-    endian: false,
-  },
-  h: {
-    size: 2,
-    native: 'Int16',
-  },
-  H: {
-    size: 2,
-    native: 'UInt16',
-  },
-  i: {
-    size: 4,
-    native: 'Int32',
-  },
-  I: {
-    size: 4,
-    native: 'UInt32',
-  },
-  l: {
-    size: 4,
-    native: 'Int32',
-  },
-  L: {
-    size: 4,
-    native: 'UInt32',
-  },
-  f: {
-    size: 4,
-    native: 'Float',
-  },
-  d: {
-    size: 8,
-    native: 'Double',
-  },
-  s: {
-    size: 1,
-    string: true,
-  }
+module.exports = function(buf){
+    return new Reader(buf);
 };
 
-var ENDIAN = {
-  '@': false,
-  '=': false,
-  '<': 'LE',
-  '>': 'BE',
-  '!': 'BE',
-};
-
-var struct = {
-    sizeOf: function(huh){
-
-    },
-    unpack: function(format, buf, offset){
-
-    }
-};
-
+module.exports.Reader = Reader;
 
 function Reader(buf){
     this.buf = buf;
@@ -149,24 +79,41 @@ Reader.prototype.getEntry = function(name, num){
 
 Reader.prototype.readData = function(type, num){
     var m = {
-        1: 'readNextByte',
-        2: 'readNextString',
-        3: 'readNextUnsignedInt',
-        4: 'readNextShort',
-        5: 'readNextLong',
-        7: 'readNextFloat',
-        8: 'readNextDouble',
-        13: 'readNextBool'
+        1: 'Byte',
+        3: 'UnsignedInt',
+        4: 'Short',
+        5: 'Long',
+        7: 'Float',
+        8: 'Double',
+        10: 'Date',
+        11: 'Time',
+        12: 'Thumb',
+        13: 'Bool'
     };
+
+    if(m[type]){
+        return this._loop(m[type], num);
+    }
+    else if(type === 2){
+        return this.readNextString(num);
+    }
+    else if(type === 18){
+        return this.readNextpString(num);
+    }
+    else if(type === 19){
+        return this.readNextcString(num);
+    }
     return this[m[type]](num);
 };
 
-Reader.prototype.readNextString = function(size){
-    var chars = [];
-    for(var i = 0; i <= size -1; i++){
-        chars.push(this.readNextChar());
+Reader.prototype._loop = function(type, num){
+    var buf = [],
+        method = 'readNext' + type;
+
+    for(var i=0; i <= num; i++){
+        buf.push(this[type]);
     }
-    return chars.join('');
+    return buf;
 };
 
 Reader.prototype.readNextShort = function(){
@@ -186,19 +133,93 @@ Reader.prototype.readNextChar = function(){
     return v;
 };
 
-Reader.prototype.readNextByte = function(size){
-    if(size === undefined || size === 1){
-        var v = this.buf.UInt8(this.pos);
-        this.pos += 1;
-        return v;
-    }
-    var out = [];
-    for(var i=0; i<=size; i++){
-        out.push(this.readNextByte());
-    }
-    return out;
+Reader.prototype.readNextByte = function(){
+    var v = this.buf.readUInt8BE(this.pos);
+    this.pos += 1;
+    return v;
 };
 
+Reader.prototype.readNextUnsignedInt = function(){
+    var v = this.buf.readUInt32BE(this.pos);
+    this.pos += 4;
+    return v;
+};
+
+Reader.prototype.readNextLong = function(){
+    var v = this.buf.readInt32BE(this.pos);
+    this.pos += 4;
+    return v;
+};
+
+Reader.prototype.readNextFloat = function(){
+    var v = this.buf.readFloatBE(this.pos);
+    this.pos += 4;
+    return v;
+};
+
+
+Reader.prototype.readNextDouble = function(){
+    var v = this.buf.readDoubleBE(this.pos);
+    this.pos += 8;
+    return v;
+};
+
+Reader.prototype.readNextBool = function(){
+    return this.readNextByte() === 1;
+};
+
+Reader.prototype.readNextDate = function(){
+    var d = new Date();
+    d.setYear(this.readNextShort());
+    d.setMonth(this.readNextByte());
+    d.setDay(this.readNextByte());
+    return d;
+};
+
+
+Reader.prototype.readNextTime = function(){
+    var d = new Date();
+    d.setHour(this.readNextByte());
+    d.setMinutes(this.readNextByte());
+    d.setSeconds(this.readNextByte());
+    d.setMilliseconds(this.readNextByte());
+    return d;
+};
+
+Reader.prototype.readNextThumb = function(){
+    return [
+        this.readNextLong(),
+        this.readNextLong(),
+        this.readNextByte(),
+        this.readNextByte()
+    ];
+};
+
+Reader.prototype.readNextString = function(size){
+    var chars = [];
+    for(var i = 0; i <= size -1; i++){
+        chars.push(this.readNextChar());
+    }
+    return chars.join('');
+};
+
+Reader.prototype.readNextpString = function(){
+    return this.readNextString(this.readNextByte());
+};
+
+Reader.prototype.readNextcString = function(){
+    var chars = [],
+        c;
+    while(true){
+        c = this.readNextChar();
+        if(c.charAt(0) === 0){
+            return chars.join('');
+        }
+        else {
+            chars.push(c);
+        }
+    }
+};
 
 Reader.prototype.tell = function(){
     return this.pos;
