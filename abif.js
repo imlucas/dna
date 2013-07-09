@@ -281,6 +281,84 @@ Read.prototype.getChannel = function(base){
     return undefined;
 };
 
+Reader.prototype.getPeaks = function(){
+    // sub peaks {
+    //     my ($self, $n) = @_;
+    //     my $k = '_PEAK' . $n;
+    //     my ($position, $height, $beginPos, $endPos, $beginHI, $endHI, $area, $volume, $fragSize, $isEdited, $label);
+    //     my $s = undef;
+    //     my @raw_data;
+    //     my @peak_array;
+    //     my $i;
+
+    //     unless (defined $self->{$k}) {
+    //         @raw_data = $self->get_data_item('PEAK', $n, '(NnNNnnNNB32nZ64)*');
+    //         for ($i = 0; $i < @raw_data; $i += 11) {
+    //             ($position, $height, $beginPos, $endPos, $beginHI, $endHI, $area, $volume, $s, $isEdited, $label) = @raw_data[$i .. $i+10];
+    //             $fragSize = $self->_ieee2decimal($s) if (defined $s);
+    //             my $peak = {};
+    //             $peak->{position} = $position;
+    //             $peak->{height} = $height;
+    //             $peak->{beginPos} = $beginPos;
+    //             $peak->{endPos} = $endPos;
+    //             $peak->{beginHI} = $beginHI;
+    //             $peak->{endHI} = $endHI;
+    //             $peak->{area} = $area;
+    //             $peak->{volume} = $volume;
+    //             $peak->{fragSize} = $fragSize;
+    //             $peak->{isEdited} = $isEdited;
+    //             $peak->{label} = $label;
+    //             push @peak_array, $peak;
+    //         }
+    //     $self->{$k} = (@peak_array) ? [ @peak_array ] : [ ];
+    //     }
+    //     return @{$self->{$k}};
+    // }
+};
+
+Reader.prototype.getRawDataForChannel = function(channel){
+    // sub  raw_data_for_channel {
+    //     my ($self, $channel_number) = @_;
+    //     if ($channel_number == 5) {
+    //         $channel_number = 105;
+    //     }
+    //     if ($channel_number < 1 or
+    //         ($channel_number > 5 and $channel_number != 105)) {
+    //         return ();
+    //     }
+    //     my $k = '_DATA' . $channel_number;
+    //     unless (defined $self->{$k}) {
+    //         my @data = map { ($_ < $SHORT_MID) ? $_ : $_ - $SHORT_MAX }
+    //             $self->get_data_item('DATA', $channel_number, 'n*');
+    //         $self->{$k} = (@data) ? [ @data ] : [ ];
+    //     }
+
+    //     return @{$self->{$k}};
+    // }
+};
+
+Reader.prototype.getRawTrace = function(base){
+    // sub raw_trace {
+    //     my ($self, $base) = @_;
+    //     my %ob = ();
+
+    //     $base =~ /^[ACGTacgt]$/ or return ();
+    //     %ob = $self->order_base();
+    //     return $self->raw_data_for_channel($ob{uc($base)});
+    // }
+};
+
+Reader.prototype.getTrace = function(base){
+    // sub trace {
+    //     my ($self, $base) = @_;
+    //     my %ob = ();
+
+    //     $base =~ /^[ACGTacgt]$/ or return ();
+    //     %ob = $self->order_base();
+    //     return $self->analyzed_data_for_channel($ob{uc($base)});
+    // }
+};
+
 // These are all just simple tag reads.
 // Keeping this as a simple map for anyone else's reference.
 // Don't worry.  They'll get all nice and camel cased below.
@@ -333,88 +411,83 @@ var accessors = {
     'gene_scan_sample_name': 'SpNm',
     'injection_time': 'InSc',
     'injection_voltage': 'InVt',
-    'instrument_class': '',
-    'instrument_family': '',
-    'instrument_name_and_serial_number': '',
-    'instrument_param': '',
-    'is_capillary_machine': '',
-    'laser_power': '',
-    'length_to_detector': '',
-    'mobility_file': '',
-    'mobility_file_orig': '',
-    'model_number': '',
-    'noise': '',
-    'num_capillaries': '',
-    'num_dyes': '',
-    'num_scans': '',
-    'official_instrument_name': '',
-    'offscale_peaks': '',
-    'offscale_scans': '',
-    'order_base': '',
-    'peak1_location': '',
-    'peak1_location_orig': '',
-    'peak_area_ratio': '',
-    'peaks': '',
-    'pixel_bin_size': '',
-    'pixels_lane': '',
-    'plate_type': '',
-    'plate_size': '',
-    'polymer_expiration_date': '',
-    'polymer_lot_number': '',
-    'power': '',
-    'quality_levels': '',
-    'quality_values': '',
-    'quality_values_ref': '',
-    'raw_data_for_channel': '',
-    'raw_trace': '',
-    'rescaling': '',
-    'results_group': '',
-    'results_group_comment': '',
-    'results_group_owner': '',
-    'reverse_complement_flag': '',
-    'run_module_name': '',
-    'run_module_version': '',
-    'run_module_xml_schema_version': '',
-    'run_module_xml_string': '',
-    'run_name': '',
-    'run_protocol_name': '',
-    'run_protocol_version': '',
-    'run_start_date': '',
-    'run_start_time': '',
-    'run_stop_date': '',
-    'run_stop_time': '',
-    'run_temperature': '',
-    'sample_file_format_version': '',
-    'sample_name': '',
-    'sample_tracking_id': '',
-    'scanning_rate': '',
-    'scan_color_data_values': '',
-    'scan_numbers': '',
-    'scan_number_indices': '',
-    'seqscape_project_name': '',
-    'seqscape_project_template': '',
-    'seqscape_specimen_name': '',
-    'sequence': '',
-    'sequence_length': '',
-    'sequencing_analysis_param_filename': '',
-    'signal_level': '',
-    'size_standard_filename': '',
-    'snp_set_name': '',
-    'start_collection_event': '',
-    'start_point': '',
-    'start_point_orig': '',
-    'start_run_event': '',
-    'stop_collection_event': '',
-    'stop_point': '',
-    'stop_point_orig': '',
-    'stop_run_event': '',
-    'temperature': '',
-    'trace': '',
-    'trim_probability_threshold': '',
-    'trim_region': '',
-    'voltage': '',
-    'user': '',
-    'well_id': ''
+    'instrument_class': 'HCFG',
+    'instrument_family': ['HCFG', 2],
+    'instrument_name_and_serial_number': 'MCHN',
+    'instrument_param': ['HCFG', 4],
+    'is_capillary_machine': 'CpEP',
+    'laser_power': 'LsrP',
+    'length_to_detector': 'LNTD',
+    'mobility_file': ['PDMF', 2],
+    'mobility_file_orig': 'PDMF',
+    'model_number': 'MODL',
+    'noise': 'NOIS',
+    'num_capillaries': 'NLNE',
+    'num_dyes': 'Dye#',
+    'num_scans': 'SCAN',
+    'official_instrument_name': ['HCFG', 3],
+    'offscale_peaks': 'OffS',
+    'offscale_scans': 'OfSc',
+    'peak1_location': ['B1Pt', 2],
+    'peak1_location_orig': 'B1Pt',
+    'peak_area_ratio': 'phAR',
+    'pixel_bin_size': 'PXLB',
+    'pixels_lane': 'NAVG',
+    'plate_type': 'PTYP',
+    'plate_size': 'PSZE',
+    'polymer_expiration_date': 'SMED',
+    'polymer_lot_number': 'SMLt',
+    'power': ['DATA', 7],
+    'quality_levels': 'phQL',
+    'quality_values': ['PCON', 2],
+    'quality_values_ref': ['PCON', 2],
+    'rescaling': 'Scal',
+    'results_group': 'RGNm',
+    'results_group_comment': 'RGCm',
+    'results_group_owner': 'RGOw',
+    'reverse_complement_flag': 'RevC',
+    'run_module_name': 'RMdN',
+    'run_module_version': 'RMdV',
+    'run_module_xml_schema_version': 'RMXV',
+    'run_module_xml_string': 'RMdX',
+    'run_name': 'RunN',
+    'run_protocol_name': 'RPrN',
+    'run_protocol_version': 'RPrV',
+    'run_start_date': 'RUND',
+    'run_start_time': 'RUNT',
+    'run_stop_date': ['RUND', 2],
+    'run_stop_time': ['RUNT', 2],
+    'run_temperature': 'Tmpr',
+    'sample_file_format_version': ['SVER', 4],
+    'sample_name': 'SMPL',
+    'sample_tracking_id': 'LIMS',
+    'scanning_rate': 'Rate',
+    'scan_color_data_values': 'OvrV',
+    'scan_numbers': 'Satd',
+    'scan_number_indices': 'OvrI',
+    'seqscape_project_name': ['PROJ', 4],
+    'seqscape_project_template': 'PRJT',
+    'seqscape_specimen_name': 'SPEC',
+    'sequence': ['PBAS', 2],
+    'sequence_length': ['PBAS', 2],
+    'sequencing_analysis_param_filename': ['APFN', 2],
+    'signal_level': 'S/N%',
+    'size_standard_filename': 'StdF',
+    'snp_set_name': 'SnpS',
+    'start_collection_event': ['EVNT', 3],
+    'start_point': ['ASPt', 2],
+    'start_point_orig': 'ASPt',
+    'start_run_event': 'EVNT',
+    'stop_collection_event': ['EVNT', 4],
+    'stop_point': ['AEPt', 2],
+    'stop_point_orig': 'AEPt',
+    'stop_run_event': ['EVNT', 2],
+    'temperature': ['DATA', 8],
+    'trim_probability_threshold': ['phTR', 2],
+    'trim_region': 'phTR',
+    'voltage': ['DATA', 5],
+    'user': 'User',
+    'well_id': 'TUBE'
 };
 
 Object.keys(accessors).map(function(accessor){
